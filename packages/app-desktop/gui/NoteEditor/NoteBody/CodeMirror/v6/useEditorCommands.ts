@@ -138,7 +138,9 @@ const useEditorCommands = (props: Props) => {
 				}
 			},
 			search: () => {
-				return editorRef.current.execCommand(EditorCommandType.ShowSearch);
+				const r = editorRef.current.execCommand(EditorCommandType.ShowSearch);
+				editorRef.current.execCommand(EditorCommandType.FindNext);
+				return r;
 			},
 			'editor.scrollToText': (value: ScrollToTextValue) => {
 				value = {
