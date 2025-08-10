@@ -88,7 +88,7 @@ const useEditorCommands = (props: Props) => {
 				}
 			},
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Old code before rule was applied
-			insertText: (value: any) => editorRef.current.insertText(value),
+			insertText: (value: any) => { editorRef.current.insertText(value); },
 			attachFile: async () => {
 				const newBody = await commandAttachFileToBody(
 					props.editorContent, null, { position: props.selectionRange.from, markupLanguage: props.contentMarkupLanguage },
@@ -138,9 +138,7 @@ const useEditorCommands = (props: Props) => {
 				}
 			},
 			search: () => {
-				const r = editorRef.current.execCommand(EditorCommandType.ShowSearch);
-				editorRef.current.execCommand(EditorCommandType.FindNext);
-				return r;
+				return editorRef.current.execCommand(EditorCommandType.ShowSearch);
 			},
 			'editor.scrollToText': (value: ScrollToTextValue) => {
 				value = {

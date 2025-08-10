@@ -4,6 +4,8 @@ import { RenderedBody } from './types';
 import { SearchMarkers } from '../../../utils/useSearchMarkers';
 const debounce = require('debounce');
 
+import { EditorCommandType } from '@joplin/editor/types';
+
 interface Props {
 	setLocalSearchResultCount(count: number): void;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Old code before rule was applied
@@ -32,17 +34,44 @@ const useEditorSearchHandler = (props: Props) => {
 	// Fixes https://github.com/laurent22/joplin/issues/7565
 	const debouncedMarkers = useMemo(() => debounce((searchMarkers: SearchMarkers) => {
 		if (!editorRef.current) return;
-
 		if (showEditorMarkersRef.current) {
 			const matches = editorRef.current.setMarkers(searchMarkers.keywords, searchMarkers.options);
 			props.setLocalSearchResultCount(matches);
 		} else {
 			editorRef.current.setMarkers(searchMarkers.keywords, { ...searchMarkers.options, showEditorMarkers: false });
 		}
+
+		const viewDom = editorRef.current.editor.dom;
+		const panel = viewDom.querySelector('.cm-panel.cm-search');
+		const input = panel?.querySelector('input.cm-textfield, textarea.cm-textfield');
+
+		const selStart = input?.selectionStart ?? null;
+		const selEnd = input?.selectionEnd ?? null;
+		const scrollL = input?.scrollLeft ?? 0;
+
+		if (searchMarkers.keywords[0].value && !showEditorMarkersRef.current) {
+			editorRef.current.execCommand(EditorCommandType.FindNext);
+		}
+
+		if (input) {
+			requestAnimationFrame(() => requestAnimationFrame(() => {
+				if (selStart !== null && selEnd !== null) {
+					const max = input.value.length;
+					const s = Math.min(selStart, max);
+					const e = Math.min(selEnd, max);
+					input.setSelectionRange(s, e);
+					input.scrollLeft = scrollL;
+				} else {
+					const end = input.value.length;
+					input.setSelectionRange(end, end);
+				}
+			}));
+		}
+
 	}, 50), [editorRef, props.setLocalSearchResultCount]);
 
 	useEffect(() => {
-		if (!searchMarkers) return () => {};
+		if (!searchMarkers) return () => { };
 
 		// If there is a currently active search, it's important to re-search the text as the user
 		// types. However this is slow for performance so we ONLY want it to happen when there is
@@ -57,7 +86,7 @@ const useEditorSearchHandler = (props: Props) => {
 			webviewRef.current.send('setMarkers', searchMarkers.keywords, searchMarkers.options);
 			debouncedMarkers(searchMarkers);
 		}
-		return () => {};
+		return () => { };
 	}, [
 		editorRef,
 		webviewRef,
