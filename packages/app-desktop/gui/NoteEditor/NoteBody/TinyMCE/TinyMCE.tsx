@@ -767,26 +767,44 @@ const TinyMCE = (props: NoteBodyEditorProps, ref: Ref<NoteBodyEditorRef>) => {
 				text_patterns_lookup: (ctx: TextPatternContext) => textPatternsLookupRef.current(ctx),
 
 				setup: (editor: Editor) => {
+					function pointInRects(x: number, y: number, rects: DOMRectList | DOMRect[]): boolean {
+						for (const r of rects) {
+							if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return true;
+						}
+						return false;
+					}
+
 					editor.on('mousedown', (event) => {
 						const li = event.target;
 						const childList = li.querySelector('ul,ol');
 						if (!childList) return;
-						let textNode = null;
+						let textNode: Node | null = null;
 						for (const node of li.childNodes) {
 							if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
 								textNode = node;
 								break;
 							}
 						}
-						if (!textNode) { return; }
-
-						textNode = event.target.firstChild;
-						if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-							const range = document.createRange();
-							range.setStart(textNode, textNode.nodeValue.length);
-							range.collapse(false);
-							editor.selection.setRng(range);
+						if (!textNode) {
+							return;
 						}
+
+						const r = document.createRange();
+						r.selectNodeContents(textNode);
+						const rects = r.getClientRects();
+
+						const { clientX: x, clientY: y } = event;
+
+						if (pointInRects(x, y, rects)) {
+							return;
+						}
+
+						textNode = li.firstChild;
+
+						const range = document.createRange();
+						range.setStart(textNode, textNode.nodeValue.length);
+						range.collapse(false);
+						editor.selection.setRng(range);
 
 						event.preventDefault();
 					}, true);
