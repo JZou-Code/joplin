@@ -49,6 +49,21 @@ function formatReadTime(readTimeMinutes: number) {
 	return Math.ceil(readTimeMinutes).toString();
 }
 
+function removeHiddenWords(src: string): string {
+	let prev: string;
+	let out = src;
+	const pairPattern = /<(\w[\w:-]*)([^>]*?(?:\bhidden\b|style\s*=\s*["'][^"']*(?:display\s*:\s*none|visibility\s*:\s*hidden)[^"']*["']))[^>]*>((?:.|\r|\n)*?)<\/\1>/gi;
+	do {
+		prev = out;
+		out = out.replace(pairPattern, '');
+	} while (out !== prev);
+
+	out = out.replace(/<(\w[\w:-]*)([^>]*?\bhidden\b[^>]*)\/?>/gi, '');
+	out = out.replace(/<(\w[\w:-]*)([^>]*?style\s*=\s*["'][^"']*(?:display\s*:\s*none|visibility\s*:\s*hidden)[^"']*["'][^>]*)\/?>/gi, '');
+
+	return out;
+}
+
 export default function NoteContentPropertiesDialog(props: NoteContentPropertiesDialogProps) {
 	const theme = themeStyle(props.themeId);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Old code before rule was applied
@@ -73,7 +88,8 @@ export default function NoteContentPropertiesDialog(props: NoteContentProperties
 	}, [props.text]);
 
 	useEffect(() => {
-		const strippedText: string = markupToHtml().stripMarkup(props.markupLanguage, props.text);
+		const preFiltered = removeHiddenWords(props.text);
+		const strippedText: string = markupToHtml().stripMarkup(props.markupLanguage, preFiltered);
 		countElements(strippedText, setStrippedWords, setStrippedCharacters, setStrippedCharactersNoSpace, setStrippedLines);
 		// eslint-disable-next-line @seiyab/react-hooks/exhaustive-deps -- Old code before rule was applied
 	}, [props.text]);
