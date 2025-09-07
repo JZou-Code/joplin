@@ -40,25 +40,29 @@ export async function commandAttachFileToBody(body: string, filePaths: string[] 
 		filePaths = await bridge().showOpenDialog({
 			properties: ['openFile', 'createDirectory', 'multiSelections'],
 		});
+
 		if (!filePaths || !filePaths.length) return null;
 	}
 
+	let pos = options.position ?? 0;
+
 	for (let i = 0; i < filePaths.length; i++) {
 		const filePath = filePaths[i];
+		const beforeLen = body.length;
 		try {
 			logger.info(`Attaching ${filePath}`);
-			const newBody = await shim.attachFileToNoteBody(body, filePath, options.position, {
+			const newBody = await shim.attachFileToNoteBody(body, filePath, pos, {
 				createFileURL: options.createFileURL,
 				resizeLargeImages: Setting.value('imageResizing'),
 				markupLanguage: options.markupLanguage,
-				resourceSuffix: i > 0 ? ' ' : '',
+				resourcePrefix: i > 0 ? ' ' : '',
 			});
 
 			if (!newBody) {
 				logger.info('File attachment was cancelled');
 				return null;
 			}
-
+			pos += newBody.length - beforeLen;
 			body = newBody;
 			logger.info('File was attached.');
 		} catch (error) {
