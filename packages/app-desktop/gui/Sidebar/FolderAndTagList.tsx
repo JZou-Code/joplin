@@ -70,7 +70,7 @@ const FolderAndTagList: React.FC<Props> = props => {
 	const [itemListContainer, setItemListContainer] = useState<HTMLDivElement|null>(null);
 	listContainerRef.current = itemListContainer;
 	const listHeight = useElementHeight(itemListContainer);
-	const listStyle = useMemo(() => ({ height: listHeight }), [listHeight]);
+	const listStyle = useMemo(() => ({ minWidth: 200, height: listHeight }), [listHeight]);
 
 	const onRenderContentWrapper = useOnRenderListWrapper({ allFoldersCollapsed, selectedIndex, onKeyDown: onKeyEventHandler });
 
