@@ -173,8 +173,9 @@ export default class Tag extends BaseItem {
 
 	public static async loadByTitle(title: string): Promise<TagEntity> {
 		// Case insensitive doesn't work with especial Unicode characters like Ö
-		const lowercaseTitle = title.toLowerCase();
-		return this.loadByField('title', lowercaseTitle, { caseInsensitive: true });
+		// const lowercaseTitle = title;
+		// return this.loadByField('title', lowercaseTitle, { caseInsensitive: true });
+		return this.loadByField('title', title, { caseInsensitive: true });
 	}
 
 	public static async addNoteTagByTitle(noteId: string, tagTitle: string) {
@@ -188,7 +189,7 @@ export default class Tag extends BaseItem {
 		const addedTitles = [];
 
 		for (let i = 0; i < tagTitles.length; i++) {
-			const title = tagTitles[i].trim().toLowerCase();
+			const title = tagTitles[i].trim();
 			if (!title) continue;
 			let tag = await this.loadByTitle(title);
 			if (!tag) tag = await Tag.save({ title: title }, { userSideValidation: true });
@@ -197,7 +198,7 @@ export default class Tag extends BaseItem {
 		}
 
 		for (let i = 0; i < previousTags.length; i++) {
-			if (addedTitles.indexOf(previousTags[i].title.toLowerCase()) < 0) {
+			if (addedTitles.indexOf(previousTags[i].title) < 0) {
 				await this.removeNote(previousTags[i].id, noteId);
 			}
 		}
@@ -227,7 +228,7 @@ export default class Tag extends BaseItem {
 
 		if (options.userSideValidation) {
 			if ('title' in o) {
-				o.title = o.title.trim().toLowerCase();
+				o.title = o.title.trim();
 
 				const existingTag = await Tag.loadByTitle(o.title);
 				if (existingTag && existingTag.id !== o.id) throw new Error(_('The tag "%s" already exists. Please choose a different name.', o.title));
